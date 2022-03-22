@@ -1,4 +1,4 @@
-from camera import BaseCamera
+from camera_toolkit.camera import BaseCamera
 import numpy as np 
 import pyzed.sl as sl
 import cv2

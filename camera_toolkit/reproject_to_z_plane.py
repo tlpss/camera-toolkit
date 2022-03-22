@@ -1,7 +1,7 @@
 from matplotlib import image
 import numpy as np
 
-def image_plane_to_ground_plane(image_coords: np.ndarray,camera_matrix:np.ndarray, world_in_camera_frame_pose:np.ndarray):
+def reproject_to_ground_plane(image_coords: np.ndarray,camera_matrix:np.ndarray, world_in_camera_frame_pose:np.ndarray):
     """Reprojects points from the camera plane to the Z-plane of the world frame.
 
     Args:
@@ -27,7 +27,6 @@ def image_plane_to_ground_plane(image_coords: np.ndarray,camera_matrix:np.ndarra
 
     world_frame_ray_vectors = rotation_matrix @ camera_frame_ray_vector
     world_frame_ray_vectors = np.transpose(world_frame_ray_vectors)
-
     t = -  world_frame_ray_vectors[:,2] / translation[2]
     t = 1/ t
     points = (t[:,np.newaxis]* world_frame_ray_vectors + translation)
@@ -40,4 +39,4 @@ if __name__ == "__main__":
     transform = np.array([[0.9956,0.0192, 0.0915, 0.1656],[0.0423, - 0.965,-0.257, 0.196],[0.083, 0.260, -0.962, 0.966],[0,0,0,1]])
     image_coords = np.array([[578,448],[300,400]])
 
-    print(image_plane_to_ground_plane(image_coords, camera_matrix, transform))
+    print(reproject_to_ground_plane(image_coords, camera_matrix, transform))
