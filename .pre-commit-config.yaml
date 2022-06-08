@@ -30,4 +30,3 @@ repos:
         name: black - python code formatter
         entry: black --line-length 119
         files: \.py$
-

@@ -2,12 +2,12 @@
 Script for testing the reprojection of an image coordinate
 """
 
-from camera_toolkit.zed2i import Zed2i
-from camera_toolkit.aruco_pose import get_aruco_marker_poses
 import cv2
-from camera_toolkit.reproject_to_z_plane import reproject_to_ground_plane
-
 import numpy as np
+
+from camera_toolkit.aruco_pose import get_aruco_marker_poses
+from camera_toolkit.reproject_to_z_plane import reproject_to_ground_plane
+from camera_toolkit.zed2i import Zed2i
 
 Zed2i.list_camera_serial_numbers()
 zed = Zed2i()

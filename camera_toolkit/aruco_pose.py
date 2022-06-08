@@ -1,7 +1,8 @@
+import math  # Math library
+
 import cv2
 import numpy as np  # Import Numpy library
 from scipy.spatial.transform import Rotation as R
-import math  # Math library
 
 
 def get_aruco_marker_poses(
@@ -25,9 +26,7 @@ def get_aruco_marker_poses(
         return None, None, None
 
         # Get the rotation and translation vectors
-    rvecs, tvecs, obj_points = cv2.aruco.estimatePoseSingleMarkers(
-        corners, aruco_marker_size, cam_matrix, np.zeros(4)
-    )
+    rvecs, tvecs, obj_points = cv2.aruco.estimatePoseSingleMarkers(corners, aruco_marker_size, cam_matrix, np.zeros(4))
 
     # The pose of the marker is with respect to the camera lens frame.
     # Imagine you are looking through the camera viewfinder,
@@ -42,7 +41,7 @@ def get_aruco_marker_poses(
         rotation_matrix = np.eye(3)
         rotation_matrix = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
         r = R.from_matrix(rotation_matrix)
-        quat = r.as_quat()
+        r.as_quat()
 
         translations.append(tvecs[i][0])
         rotation_matrices.append(rotation_matrix)
@@ -57,6 +56,7 @@ def get_aruco_marker_poses(
 
 if __name__ == "__main__":
     from zed2i import Zed2i
+
     """
     Test script with Zed2i
     """
@@ -67,9 +67,7 @@ if __name__ == "__main__":
     cam_matrix = zed.get_mono_camera_matrix()
     print(img.shape)
 
-    img, t, r = get_aruco_marker_poses(
-        img, cam_matrix, 0.106, cv2.aruco.DICT_6X6_250, True
-    )
+    img, t, r = get_aruco_marker_poses(img, cam_matrix, 0.106, cv2.aruco.DICT_6X6_250, True)
     print(t)
     print(r)
     cv2.imshow(",", img)

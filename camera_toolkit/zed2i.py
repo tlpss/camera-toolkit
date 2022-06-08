@@ -1,8 +1,8 @@
-from camera_toolkit.camera import BaseCamera
+import cv2
 import numpy as np
 import pyzed.sl as sl
-import cv2
-from enum import Enum
+
+from camera_toolkit.camera import BaseCamera
 
 
 class Zed2i(BaseCamera):
@@ -28,18 +28,10 @@ class Zed2i(BaseCamera):
         self.camera.close()
 
     def get_mono_camera_matrix(self):
-        fx = (
-            self.camera.get_camera_information().camera_configuration.calibration_parameters.right_cam.fx
-        )
-        fy = (
-            self.camera.get_camera_information().camera_configuration.calibration_parameters.right_cam.fy
-        )
-        cx = (
-            self.camera.get_camera_information().camera_configuration.calibration_parameters.right_cam.cx
-        )
-        cy = (
-            self.camera.get_camera_information().camera_configuration.calibration_parameters.right_cam.cy
-        )
+        fx = self.camera.get_camera_information().camera_configuration.calibration_parameters.right_cam.fx
+        fy = self.camera.get_camera_information().camera_configuration.calibration_parameters.right_cam.fy
+        cx = self.camera.get_camera_information().camera_configuration.calibration_parameters.right_cam.cx
+        cy = self.camera.get_camera_information().camera_configuration.calibration_parameters.right_cam.cy
         print(fx)
         cam_matrix = np.zeros((3, 3))
         cam_matrix[0, 0] = fx

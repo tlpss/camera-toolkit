@@ -1,5 +1,5 @@
 import setuptools
-from setuptools import find_packages
+
 setuptools.setup(
     name="camera_toolkit",
     version="0.0.1",
@@ -8,9 +8,8 @@ setuptools.setup(
     description="Package for using RBG(D) camera's in a robotics context",
     url="https://github.com/tlpss/camera-toolkit",
     packages=["camera_toolkit"],
-
-    install_requires = [
+    install_requires=[
         "numpy",
         "opencv-contrib-python==4.5.5.62",
-    ]
+    ],
 )
