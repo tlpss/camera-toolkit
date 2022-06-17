@@ -15,7 +15,7 @@ img = zed.get_mono_rgb_image()
 img = zed.image_shape_torch_to_opencv(img)
 cam_matrix = zed.get_mono_camera_matrix()
 print(img.shape)
-img, t, r, ids = get_aruco_marker_poses(img, cam_matrix, 0.058, cv2.aruco.DICT_5X5_250, True)
+img, t, r, ids = get_aruco_marker_poses(img, cam_matrix, 0.103, cv2.aruco.DICT_5X5_250, True)
 
 print(t)
 print(r)

@@ -2,8 +2,7 @@ import numpy as np
 
 
 def reproject_to_ground_plane(
-    image_coords: np.ndarray, camera_matrix: np.ndarray, world_in_camera_frame_pose: np.ndarray
-):
+    image_coords: np.ndarray, camera_matrix: np.ndarray, world_in_camera_frame_pose: np.ndarray, height: float = 0.0):
     """Reprojects points from the camera plane to the Z-plane of the world frame.
 
     Args:
@@ -12,7 +11,7 @@ def reproject_to_ground_plane(
         world_in_camera_frame_pose (_type_): 2D 4x4 numpy array with the transformation in homogeneous coordinates from the camera to the world origin.
 
     Returns:
-        _type_ Nx3 numpy axis with world coordinates on the Z=0 plane wrt to the world frame.
+        _type_ Nx3 numpy axis with world coordinates on the Z=height plane wrt to the world frame.
     """
     coords = np.ones((image_coords.shape[0], 3))
     coords[:, :2] = image_coords
@@ -27,8 +26,7 @@ def reproject_to_ground_plane(
 
     world_frame_ray_vectors = rotation_matrix @ camera_frame_ray_vector
     world_frame_ray_vectors = np.transpose(world_frame_ray_vectors)
-    t = -world_frame_ray_vectors[:, 2] / translation[2]
-    t = 1 / t
+    t =  (height- translation[2])  /world_frame_ray_vectors[:, 2] 
     points = t[:, np.newaxis] * world_frame_ray_vectors + translation
     return points
 
@@ -46,3 +44,6 @@ if __name__ == "__main__":
     image_coords = np.array([[578, 448], [300, 400]])
 
     print(reproject_to_ground_plane(image_coords, camera_matrix, transform))
+
+    # [[-0.28038469  0.03821266  0.        ]
+    # [-0.77474858  0.10849364  0.        ]]
