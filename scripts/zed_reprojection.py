@@ -5,7 +5,7 @@ Script for testing the reprojection of an image coordinate
 import cv2
 import numpy as np
 
-from camera_toolkit.aruco_pose import get_aruco_marker_poses
+from camera_toolkit.aruco import get_aruco_marker_poses
 from camera_toolkit.reproject_to_z_plane import reproject_to_ground_plane
 from camera_toolkit.zed2i import Zed2i
 
@@ -15,8 +15,8 @@ img = zed.get_mono_rgb_image()
 img = zed.image_shape_torch_to_opencv(img)
 cam_matrix = zed.get_mono_camera_matrix()
 print(img.shape)
+img, t, r, ids = get_aruco_marker_poses(img, cam_matrix, 0.058, cv2.aruco.DICT_5X5_250, True)
 
-img, t, r = get_aruco_marker_poses(img, cam_matrix, 0.106, cv2.aruco.DICT_6X6_250, True)
 print(t)
 print(r)
 

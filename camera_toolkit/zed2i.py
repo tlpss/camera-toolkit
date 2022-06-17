@@ -58,7 +58,7 @@ class Zed2i(BaseCamera):
 
 if __name__ == "__main__":
     Zed2i.list_camera_serial_numbers()
-    zed = Zed2i()
+    zed = Zed2i(sl.RESOLUTION.HD720)
     img = zed.get_mono_rgb_image()
     print(img.shape)
     img = zed.image_shape_torch_to_opencv(img)
