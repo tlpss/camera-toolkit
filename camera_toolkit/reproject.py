@@ -62,7 +62,7 @@ def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_m
 
 def extract_depth_from_depthmap_heuristic(
     u: int, v: int, depth_map: np.ndarray, mask_size: int = 11, depth_percentile: float = 0.05
-):
+) -> float:
     """
     A simple heuristic to get more robust depth values of the depth map. Especially with keypoints we are often interested in points
     on the edge of an object, or even worse on a corner. Not only are these regions noisy by themselves but the keypoints could also be
@@ -70,7 +70,8 @@ def extract_depth_from_depthmap_heuristic(
 
     This function takes the percentile of a region around the specified point and assumes we are interested in the nearest object present.
     This is not always true (think about the backside of a box looking under a 45 degree angle) but it serves as a good proxy. The more confident
-    you are of your keypoints and the better the heatmaps are, the lower you could set the mask size and percentile.
+    you are of your keypoints and the better the heatmaps are, the lower you could set the mask size and percentile. If you are very, very confident
+    you could directly take the pointcloud as well instead of manually querying the heatmap, but I find that they are more noisy.
 
     Also note that this function assumes there are no negative infinity values (no objects closer than 30cm!)
     """
@@ -79,6 +80,5 @@ def extract_depth_from_depthmap_heuristic(
         depth_percentile < 0.25
     ), "For straight corners, about 75 percent of the region will be background.. Are your sure you want the percentile to be lower?"
     depth_region = depth_map[v - mask_size // 2 : v + mask_size // 2, u - mask_size // 2 : u + mask_size // 2]
-    print(depth_region)
     depth = np.nanquantile(depth_region.flatten(), depth_percentile)
     return depth
