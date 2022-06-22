@@ -1,9 +1,9 @@
-import math
 from typing import Tuple  # Math library
 
 import cv2
 import numpy as np  # Import Numpy library
 from scipy.spatial.transform import Rotation as R
+
 
 def get_aruco_marker_coords(
     frame: np.ndarray,
@@ -19,7 +19,7 @@ def get_aruco_marker_coords(
     # Check that at least one ArUco marker was detected
     if marker_ids is None:
         return None
-    
+
     # average over the four corners of the markers to get the marker's center coordinates
     return np.mean(corners, axis = 2)
 

@@ -14,7 +14,7 @@ assert os.path.exists(path)
 
 while True:
 
-    img = zed.get_mono_rgb_image()
+    img = zed.get_rgb_image()
     img = zed.image_shape_torch_to_opencv(img)
     # Show images
     cv2.imshow("image", img)

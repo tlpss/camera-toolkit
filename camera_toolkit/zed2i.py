@@ -7,16 +7,21 @@ from camera_toolkit.camera import BaseCamera
 
 class Zed2i(BaseCamera):
     def __init__(self, resolution: sl.RESOLUTION = sl.RESOLUTION.HD2K, fps=15) -> None:
+        #TODO: make depth settings configurable.
+        #TODO: make camera ID configurable.
+
         super().__init__()
         self.camera = sl.Camera()
         self.camera_params = sl.InitParameters()
         self.camera_params.camera_resolution = resolution
         self.camera_params.camera_fps = fps
 
-        self.camera_params.depth_mode = sl.DEPTH_MODE.NEURAL
+        # https://www.stereolabs.com/docs/depth-sensing/depth-settings/
+        self.camera_params.depth_mode = sl.DEPTH_MODE.NEURAL # the Neural mode gives far better results usually
         self.camera_params.coordinate_units = sl.UNIT.METER
-        self.camera_params.depth_minimum_distance = 0.2
-        self.camera_params.depth_maximum_distance = 2.0
+        self.camera_params.depth_minimum_distance = 0.3 # objects closerby will have artifacts so they are filtered out (querying them will give a - Infinty)
+        self.camera_params.depth_maximum_distance = 2.0 # filter out far away objects
+
         if self.camera.is_opened():
             # close to open with correct params
             self.camera.close()
@@ -26,10 +31,12 @@ class Zed2i(BaseCamera):
             raise IndexError(f"could not open camera, error = {status}")
 
         self.runtime_params = sl.RuntimeParameters()
+        self.runtime_params.sensing_mode = sl.SENSING_MODE.STANDARD # standard > fill for accuracy. See docs.
 
+        print(self.runtime_params)
         self.image_matrix = sl.Mat()  # allocate memory for RGB view
         self.depth_matrix = sl.Mat() # allocate memory for the depth map
-        
+
     def close(self):
         self.camera.close()
 
@@ -67,7 +74,6 @@ class Zed2i(BaseCamera):
 
         assert camera in ("left", "right")
 
-        # grab 
         error_code = self.camera.grab(self.runtime_params)
         if error_code != sl.ERROR_CODE.SUCCESS:
             raise IndexError("Could not grab new camera frame")
@@ -80,7 +86,9 @@ class Zed2i(BaseCamera):
         return self.image_shape_opencv_to_torch(image)
 
     def get_dept_image(self) -> np.ndarray:
-       # grab 
+        """
+        Returns an 8 bit quantization of the depth map. Should only be used for visualization.
+        """
         error_code = self.camera.grab(self.runtime_params)
         if error_code != sl.ERROR_CODE.SUCCESS:
             raise IndexError("Could not grab new camera frame")
@@ -89,19 +97,20 @@ class Zed2i(BaseCamera):
         return image
 
     def get_depth_map(self) -> np.ndarray:
-        # grab 
         error_code = self.camera.grab(self.runtime_params)
         if error_code != sl.ERROR_CODE.SUCCESS:
             raise IndexError("Could not grab new camera frame")
         self.camera.retrieve_measure(self.depth_matrix, sl.MEASURE.DEPTH)
         depth_map = self.depth_matrix.get_data()
         return depth_map
-    
-    def get_depth_at_coordinate(self,x,y):
-        pass
 
     @staticmethod
     def list_camera_serial_numbers():
+        """
+        List all connected ZED cameras
+
+        can be used to select a device ID or to check if cameras are connected.
+        """
         device_list = sl.Camera.get_device_list()
         print(device_list)
         return device_list
@@ -109,7 +118,7 @@ class Zed2i(BaseCamera):
 
 if __name__ == "__main__":
     Zed2i.list_camera_serial_numbers()
-    zed = Zed2i(sl.RESOLUTION.HD720)
+    zed = Zed2i(sl.RESOLUTION.HD2K)
     img = zed.get_rgb_image()
     print(img.shape)
     img = zed.image_shape_torch_to_opencv(img)
@@ -117,15 +126,6 @@ if __name__ == "__main__":
     depth_map = zed.get_depth_map()
     depth_image = zed.get_dept_image()
 
-    print(depth_map.shape)
-    print(depth_map[270,800])
-
-    def mouse_callback(event, x, y, flags, params):
-        if event == 2:
-            print(f"coords {x, y}, - z = {depth_map[y,x]} ")
-
-    cv2.namedWindow("test")
-    cv2.setMouseCallback("test", mouse_callback)
     cv2.imshow("test", img)
     cv2.imshow(",",depth_image)
     cv2.waitKey(0)
