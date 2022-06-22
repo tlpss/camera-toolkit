@@ -36,7 +36,7 @@ def reproject_to_world_z_plane(
     return points
 
 
-def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray, depth_percentile=0.1):
+def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray, mask_size=11, depth_percentile=0.05):
     """
     reprojects a point on the image plane to the 3D frame of the camera.
     point = (u,v , 0) with origin in the top left corner of the img and y-axis point down
@@ -53,7 +53,7 @@ def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_m
     img_coords = np.array([u, v, 1.0])
     ray_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is casted by numpy to column vector!
 
-    z_in_camera_frame = depth_map[v, u]
+    z_in_camera_frame = extract_depth_from_depthmap_heuristic(u,v,depth_map,mask_size,depth_percentile)
     t = z_in_camera_frame / ray_in_camera_frame[2]
 
     position_in_camera_frame = t * ray_in_camera_frame
