@@ -2,7 +2,8 @@ import numpy as np
 
 
 def reproject_to_world_z_plane(
-    image_coords: np.ndarray, camera_matrix: np.ndarray, world_in_camera_frame_pose: np.ndarray, height: float = 0.0):
+    image_coords: np.ndarray, camera_matrix: np.ndarray, world_in_camera_frame_pose: np.ndarray, height: float = 0.0
+):
     """Reprojects points from the camera plane to the specified Z-plane of the world frame
     (as this is often the frame in which you have the z-information)
 
@@ -30,11 +31,12 @@ def reproject_to_world_z_plane(
 
     world_frame_ray_vectors = rotation_matrix @ camera_frame_ray_vector
     world_frame_ray_vectors = np.transpose(world_frame_ray_vectors)
-    t =  (height- translation[2])  /world_frame_ray_vectors[:, 2]
+    t = (height - translation[2]) / world_frame_ray_vectors[:, 2]
     points = t[:, np.newaxis] * world_frame_ray_vectors + translation
     return points
 
-def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray, depth_percentile = 0.1):
+
+def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray, depth_percentile=0.1):
     """
     reprojects a point on the image plane to the 3D frame of the camera.
     point = (u,v , 0) with origin in the top left corner of the img and y-axis point down
@@ -48,18 +50,19 @@ def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_m
     Returns: (3,) np.array containing the coordinates of the point in the camera frame.
 
     """
-    img_coords = np.array([u,v,1.0])
-    ray_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords # shape is casted by numpy to column vector!
+    img_coords = np.array([u, v, 1.0])
+    ray_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is casted by numpy to column vector!
 
-    z_in_camera_frame = depth_map[v,u]
+    z_in_camera_frame = depth_map[v, u]
     t = z_in_camera_frame / ray_in_camera_frame[2]
 
     position_in_camera_frame = t * ray_in_camera_frame
     return position_in_camera_frame
 
 
-
-def extract_depth_from_depthmap_heuristic(u: int, v:int, depth_map: np.ndarray, mask_size: int = 11, depth_percentile: float = 0.05):
+def extract_depth_from_depthmap_heuristic(
+    u: int, v: int, depth_map: np.ndarray, mask_size: int = 11, depth_percentile: float = 0.05
+):
     """
     A simple heuristic to get more robust depth values of the depth map. Especially with keypoints we are often interested in points
     on the edge of an object, or even worse on a corner. Not only are these regions noisy by themselves but the keypoints could also be
@@ -71,9 +74,11 @@ def extract_depth_from_depthmap_heuristic(u: int, v:int, depth_map: np.ndarray, 
 
     Also note that this function assumes there are no negative infinity values (no objects closer than 30cm!)
     """
-    assert mask_size % 2 ,"only odd sized markers allowed"
-    assert depth_percentile < 0.25, "For straight corners, about 75 percent of the region will be background.. Are your sure you want the percentile to be lower?"
-    depth_region = depth_map[v-mask_size//2:v+mask_size//2, u - mask_size//2: u + mask_size //2]
+    assert mask_size % 2, "only odd sized markers allowed"
+    assert (
+        depth_percentile < 0.25
+    ), "For straight corners, about 75 percent of the region will be background.. Are your sure you want the percentile to be lower?"
+    depth_region = depth_map[v - mask_size // 2 : v + mask_size // 2, u - mask_size // 2 : u + mask_size // 2]
     print(depth_region)
-    depth = np.nanquantile(depth_region.flatten(),depth_percentile)
+    depth = np.nanquantile(depth_region.flatten(), depth_percentile)
     return depth

@@ -7,8 +7,8 @@ from camera_toolkit.camera import BaseCamera
 
 class Zed2i(BaseCamera):
     def __init__(self, resolution: sl.RESOLUTION = sl.RESOLUTION.HD2K, fps=15) -> None:
-        #TODO: make depth settings configurable.
-        #TODO: make camera ID configurable.
+        # TODO: make depth settings configurable.
+        # TODO: make camera ID configurable.
 
         super().__init__()
         self.camera = sl.Camera()
@@ -17,10 +17,12 @@ class Zed2i(BaseCamera):
         self.camera_params.camera_fps = fps
 
         # https://www.stereolabs.com/docs/depth-sensing/depth-settings/
-        self.camera_params.depth_mode = sl.DEPTH_MODE.NEURAL # the Neural mode gives far better results usually
+        self.camera_params.depth_mode = sl.DEPTH_MODE.NEURAL  # the Neural mode gives far better results usually
         self.camera_params.coordinate_units = sl.UNIT.METER
-        self.camera_params.depth_minimum_distance = 0.3 # objects closerby will have artifacts so they are filtered out (querying them will give a - Infinty)
-        self.camera_params.depth_maximum_distance = 2.0 # filter out far away objects
+        self.camera_params.depth_minimum_distance = (
+            0.3  # objects closerby will have artifacts so they are filtered out (querying them will give a - Infinty)
+        )
+        self.camera_params.depth_maximum_distance = 2.0  # filter out far away objects
 
         if self.camera.is_opened():
             # close to open with correct params
@@ -31,16 +33,16 @@ class Zed2i(BaseCamera):
             raise IndexError(f"could not open camera, error = {status}")
 
         self.runtime_params = sl.RuntimeParameters()
-        self.runtime_params.sensing_mode = sl.SENSING_MODE.STANDARD # standard > fill for accuracy. See docs.
+        self.runtime_params.sensing_mode = sl.SENSING_MODE.STANDARD  # standard > fill for accuracy. See docs.
 
         print(self.runtime_params)
         self.image_matrix = sl.Mat()  # allocate memory for RGB view
-        self.depth_matrix = sl.Mat() # allocate memory for the depth map
+        self.depth_matrix = sl.Mat()  # allocate memory for the depth map
 
     def close(self):
         self.camera.close()
 
-    def get_camera_matrix(self, camera:str = "left") -> np.ndarray:
+    def get_camera_matrix(self, camera: str = "left") -> np.ndarray:
         """_summary_
 
         Returns:
@@ -70,7 +72,7 @@ class Zed2i(BaseCamera):
         cam_matrix[1, 2] = cy
         return cam_matrix
 
-    def get_rgb_image(self, camera = "left") -> np.ndarray:
+    def get_rgb_image(self, camera="left") -> np.ndarray:
 
         assert camera in ("left", "right")
 
@@ -127,7 +129,7 @@ if __name__ == "__main__":
     depth_image = zed.get_dept_image()
 
     cv2.imshow("test", img)
-    cv2.imshow(",",depth_image)
+    cv2.imshow(",", depth_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
