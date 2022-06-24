@@ -7,6 +7,7 @@ class BaseCamera(abc.ABC):
     @abc.abstractmethod
     def get_camera_matrix():
         pass
+
     @abc.abstractmethod
     def get_rgb_image():
         pass

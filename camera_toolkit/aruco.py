@@ -21,7 +21,7 @@ def get_aruco_marker_coords(
         return None
 
     # average over the four corners of the markers to get the marker's center coordinates
-    return np.mean(corners, axis = 2)
+    return np.mean(corners, axis=2)
 
 
 def get_aruco_marker_poses(
@@ -41,7 +41,7 @@ def get_aruco_marker_poses(
     )
     # Check that at least one ArUco marker was detected
     if marker_ids is None:
-        return frame,None, None, None
+        return frame, None, None, None
 
         # Get the rotation and translation vectors
     rvecs, tvecs, obj_points = cv2.aruco.estimatePoseSingleMarkers(corners, aruco_marker_size, cam_matrix, np.zeros(4))
@@ -77,13 +77,13 @@ if __name__ == "__main__":
     Test script with Zed2i
     """
     Zed2i.list_camera_serial_numbers()
-    zed = Zed2i(resolution=sl.RESOLUTION.HD2K, fps = 15)
+    zed = Zed2i(resolution=sl.RESOLUTION.HD2K, fps=15)
     img = zed.get_mono_rgb_image()
     img = zed.image_shape_torch_to_opencv(img)
     cam_matrix = zed.get_mono_camera_matrix()
     print(img.shape)
 
-    coords = get_aruco_marker_coords(img,cv2.aruco.DICT_5X5_250)
+    coords = get_aruco_marker_coords(img, cv2.aruco.DICT_5X5_250)
     print(coords)
     img, t, r, ids = get_aruco_marker_poses(img, cam_matrix, 0.058, cv2.aruco.DICT_5X5_250, True)
     print(t)

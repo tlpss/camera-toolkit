@@ -21,7 +21,7 @@ cv2.destroyAllWindows()
 x = int(input("x in image coords: "))
 y = int(input("y in image coords: "))
 
-point = reproject_to_camera_frame(x,y,cam_matrix, zed.get_depth_map())
+point = reproject_to_camera_frame(x, y, cam_matrix, zed.get_depth_map())
 print(point.shape)
 print(f" point in camera frame: {point}")
 
