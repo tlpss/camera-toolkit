@@ -39,7 +39,6 @@ def get_aruco_marker_poses(
     (corners, marker_ids, rejected) = cv2.aruco.detectMarkers(
         frame, this_aruco_dictionary, parameters=this_aruco_parameters
     )
-    print(corners)
     # Check that at least one ArUco marker was detected
     if marker_ids is None:
         return frame,None, None, None
@@ -59,15 +58,12 @@ def get_aruco_marker_poses(
         # Store the rotation information
         rotation_matrix = np.eye(3)
         rotation_matrix = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
-        r = R.from_matrix(rotation_matrix)
-        r.as_quat()
 
         translations.append(tvecs[i][0])
         rotation_matrices.append(rotation_matrix)
 
     if visualize:
         frame = np.ascontiguousarray(frame)
-        print(frame.dtype)
         # Draw the axes on the marker
         for i in range(len(marker_ids)):
             cv2.drawFrameAxes(frame, cam_matrix, np.zeros(4), rvecs[i], tvecs[i], 0.05)
