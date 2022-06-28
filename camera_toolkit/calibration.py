@@ -145,7 +145,7 @@ def do_eye_to_hand_calibration(save_to_dir: str = None):
     print(f" camera position = {camera_pos_in_base}")
     print(f" camera orientation in base =  \n {camera_rotmat_in_base}")
 
-    camera_homog_transform_mat_in_base = homogeneous_matrix(camera_pos_in_base.flatten, camera_rotmat_in_base)
+    camera_homog_transform_mat_in_base = homogeneous_matrix(camera_pos_in_base.flatten(), camera_rotmat_in_base)
 
     np.save(os.path.join(save_to_dir, "camera_rotmat_in_base.npy"), camera_rotmat_in_base)
     np.save(os.path.join(save_to_dir, "camera_pos_in_base.npy"), camera_pos_in_base)
