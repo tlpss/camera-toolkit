@@ -43,7 +43,7 @@ def reproject_to_world_frame(u: int, v: int, camera_intrinsics_matrix: np.ndarra
     point_in_camera_frame = reproject_to_camera_frame(u, v, camera_intrinsics_matrix, depth_map, mask_size, depth_percentile)
     point_homog = homogeneous_vector(point_in_camera_frame)
     point_in_base_frame = camera_extrinsics_hommat @ point_homog
-    return point_in_base_frame
+    return point_in_base_frame[0:3]
 
 
 def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray, mask_size=11, depth_percentile=0.05):
