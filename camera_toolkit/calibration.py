@@ -66,10 +66,10 @@ if __name__ == "__main__":
 
     mode = "eye-to-hand"
     assert mode in ("eye-in-hand", "eye-to-hand")
-
-    eef_pos_in_robot, eef_rotmat_in_robot, marker_pos_in_cam, marker_rot_matrix_in_camera = collect_eye_to_hand_data(cv2.aruco.DICT_6X6_250,
-                                                                                                                     0.103)
-
+    #
+    # eef_pos_in_robot, eef_rotmat_in_robot, marker_pos_in_cam, marker_rot_matrix_in_camera = collect_eye_to_hand_data(cv2.aruco.DICT_6X6_250,
+    #                                                                                                                  0.103)
+    #
     # np.save("eef_pos_in_robot.npy",eef_pos_in_robot)
     # np.save("eef_rotmat_in_robot",eef_rotmat_in_robot)
     # np.save("marker_pos_in_cam",marker_pos_in_cam)
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         for i in range(eef_pos_in_robot.shape[0]):
             robot_pos_in_eef[i, :] = (- robot_rotmat_in_eef[i, :, :] @ eef_pos_in_robot[i, :])
 
-        camera_rotmat_in_base, camera_pos_in_base = cv2.calibrateHandEye(robot_rotmat_in_eef, robot_pos_in_eef, marker_rot_matrix_in_camera,
+            camera_rotmat_in_base, camera_pos_in_base = cv2.calibrateHandEye(robot_rotmat_in_eef, robot_pos_in_eef, marker_rot_matrix_in_camera,
                                                                          marker_pos_in_cam)
         print(f" camera position = {camera_pos_in_base}")
         print(f" camera orientation in base =  \n {camera_rotmat_in_base}")
@@ -101,6 +101,6 @@ if __name__ == "__main__":
         camera_homog_transform_mat_in_base = np.zeros((4, 4))
 
         camera_homog_transform_mat_in_base[0:3, 0:3] = camera_rotmat_in_base
-        camera_homog_transform_mat_in_base[0:3, 3] = camera_pos_in_base
+        camera_homog_transform_mat_in_base[0:3, 3] = camera_pos_in_base.flatten()
         camera_homog_transform_mat_in_base[3, :] = [0, 0, 0, 1]
         np.save("camera_homog_transform_mat_in_base.npy", camera_homog_transform_mat_in_base)
