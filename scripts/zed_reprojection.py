@@ -5,7 +5,7 @@ Script for testing the reprojection of an image coordinate
 import cv2
 import numpy as np
 
-from camera_toolkit.reproject import reproject_to_camera_frame
+from camera_toolkit.reproject import reproject_to_camera_frame, reproject_to_world_frame
 from camera_toolkit.zed2i import Zed2i, sl
 
 # Init camera
@@ -18,14 +18,7 @@ camera_extrinsics_hommatrix = np.load("/home/adverley/code/projects/ur3tools/cam
 # capture mouse location click events
 def click(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDBLCLK:
-        point = reproject_to_camera_frame(x, y, camera_intrinsics_matrix, zed.get_depth_map())
-        print(point.shape)
-        print(f" point in camera frame: {point}")
-
-        point_homog = np.zeros((4,1))
-        point_homog[:3] = point.reshape((3,1))
-        point_homog[3] = 1
-        point_in_base_frame = camera_extrinsics_hommatrix @ point_homog
+        point_in_base_frame = reproject_to_world_frame(x, y, camera_intrinsics_matrix, camera_extrinsics_hommatrix, zed.get_depth_map())
         print(f'Point in base frame: {point_in_base_frame}')
 
 # make screens
