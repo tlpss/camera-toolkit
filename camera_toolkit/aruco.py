@@ -61,14 +61,17 @@ def get_aruco_marker_poses(
     # z-axis points straight ahead away from your eye, out of the camera
     translations = []
     rotation_matrices = []
-    for i, marker_id in enumerate(marker_ids):
-        # Store the rotation information
-        rotation_matrix = np.eye(3)
-        rotation_matrix = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
 
-        translations.append(tvecs[i][0])
-        rotation_matrices.append(rotation_matrix)
+    if marker_ids.size == rvecs.shape[0]:
+        for i, marker_id in enumerate(marker_ids):
+            # Store the rotation information
+            rotation_matrix = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
 
+            translations.append(tvecs[i][0])
+            rotation_matrices.append(rotation_matrix)
+
+    else:
+        print("[WARNING] detected markers does not equal amount of rotation vectors weirdly")
     if visualize:
         frame = np.ascontiguousarray(frame)
         # Draw the axes on the marker
