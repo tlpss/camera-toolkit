@@ -102,7 +102,7 @@ def get_eye_to_hand_transforms(load_from: str = None, save_to_dir: str = None):
     else:
         # TODO: it should be clear, or documented, or configurable which aruco marker is being used
         aruco_marker_type = cv2.aruco.DICT_6X6_250
-        marker_size_in_m = 0.103
+        marker_size_in_m = 0.106
         eef_pos_in_robot, eef_rotmat_in_robot, marker_pos_in_cam, marker_rot_matrix_in_camera = \
             collect_eye_to_hand_transforms(aruco_marker_type, marker_size_in_m)
 
