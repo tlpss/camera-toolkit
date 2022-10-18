@@ -18,6 +18,9 @@ def reproject_to_world_z_plane(
     Returns:
         _type_ Nx3 numpy axis with world coordinates on the Z=height plane wrt to the world frame.
     """
+    if image_coords.shape[0] == 0:
+        return []
+
     coords = np.ones((image_coords.shape[0], 3))
     coords[:, :2] = image_coords
     image_coords = np.transpose(coords)
