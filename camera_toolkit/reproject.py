@@ -40,14 +40,15 @@ def reproject_to_world_z_plane(
 
 def reproject_to_world_frame(u: int, v: int, camera_intrinsics_matrix: np.ndarray, camera_extrinsics_hommat: np.ndarray,
                              depth_map: np.ndarray, mask_size=11, depth_percentile=0.05):
-    point_in_camera_frame = reproject_to_camera_frame(u, v, camera_intrinsics_matrix, depth_map, mask_size, depth_percentile)
+    point_in_camera_frame = reproject_to_camera_frame(u, v, camera_intrinsics_matrix, depth_map, mask_size,
+                                                      depth_percentile)
     point_homog = homogeneous_vector(point_in_camera_frame)
     point_in_base_frame = camera_extrinsics_hommat @ point_homog
     return point_in_base_frame[0:3]
 
 
-def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray, depthmap_mask_size=11,
-                              depth_percentile=0.05):
+def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray,
+                              depthmap_mask_size: int = 11, depth_percentile: float = 0.05):
     """
     Reprojects a point on the image plane to the 3D frame of the camera.
     point = (u, v, 0) with origin in the top left corner of the img and y-axis pointing down
@@ -76,7 +77,7 @@ def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_m
 
 def extract_depth_from_depthmap_heuristic(
         _u: np.ndarray, _v: np.ndarray, depth_map: np.ndarray, mask_size: int = 11, depth_percentile: float = 0.05
-) -> float:
+) -> np.ndarray:
     """
     A simple heuristic to get more robust depth values of the depth map. Especially with keypoints we are often interested in points
     on the edge of an object, or even worse on a corner. Not only are these regions noisy by themselves but the keypoints could also be
@@ -102,9 +103,10 @@ def extract_depth_from_depthmap_heuristic(
             depth_percentile < 0.25
     ), "For straight corners, about 75 percent of the region will be background.. Are your sure you want the percentile to be lower?"
 
-    depth_regions = np.zeros((u.size, (mask_size - 1)**2))
+    depth_regions = np.zeros((u.size, (mask_size - 1) ** 2))
     for i in range(u.size):
-        depth_region = depth_map[v[i] - mask_size // 2: v[i] + mask_size // 2, u[i] - mask_size // 2: u[i] + mask_size // 2]
+        depth_region = depth_map[v[i] - mask_size // 2: v[i] + mask_size // 2,
+                       u[i] - mask_size // 2: u[i] + mask_size // 2]
         depth_regions[i, :] = depth_region.flatten()
     depth_values = np.nanquantile(depth_regions, depth_percentile, axis=1)
     return depth_values
