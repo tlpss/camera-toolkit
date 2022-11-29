@@ -47,32 +47,37 @@ def reproject_to_world_frame(u: int, v: int, camera_intrinsics_matrix: np.ndarra
     return point_in_base_frame[0:3]
 
 
-def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray,
-                              depthmap_mask_size: int = 11, depth_percentile: float = 0.05):
+def reproject_to_camera_frame(_u: np.ndarray, _v: np.ndarray, camera_matrix: np.ndarray, depth_map: np.ndarray,
+                              depthmap_mask_size: int = 11, depth_percentile: float = 0.05) -> np.ndarray:
     """
     Reprojects a point on the image plane to the 3D frame of the camera.
     point = (u, v, 0) with origin in the top left corner of the img and y-axis pointing down
 
     Args:
-        u: horizontal coordinate
-        v: vertical coordinate
+        _u: (N,) array of u-coordinates
+        _v: (N,) array of v-coordinates
         camera_matrix: 3x3 camera matrix
-        depth_map: MxN depth map, depth_map at coord (u,v) gives the z-value of the position of that pixel in the
+        depth_map: LxM depth map, depth_map at coord (u,v) gives the z-value of the position of that pixel in the
                     camera frame (!not the distance to the camera!)
         depthmap_mask_size: see use in extract_depth_from_depthmap_heuristic
         depth_percentile: see use in extract_depth_from_depthmap_heuristic
 
-    Returns: (3,) np.array containing the coordinates of the point in the camera frame.
+    Returns: (3, N) np.array containing the coordinates of the point in the camera frame. Each column is a set of
+                coordinates.
 
     """
-    img_coords = np.array([u, v, 1.0])
-    ray_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is cast by numpy to column vector!
+    # ensure proper functionality when integers are passed for u and v
+    u = np.array(_u).flatten()
+    v = np.array(_v).flatten()
+    img_coords = np.array([u, v, [1.0 for _ in range(u.size)]])
+    rays_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is cast by numpy to column vector!
 
-    z_in_camera_frame = extract_depth_from_depthmap_heuristic(u, v, depth_map, depthmap_mask_size, depth_percentile)
-    t = z_in_camera_frame / ray_in_camera_frame[2]
+    z_values_in_camera_frame = extract_depth_from_depthmap_heuristic(u, v, depth_map, depthmap_mask_size,
+                                                                     depth_percentile)
+    t = z_values_in_camera_frame / rays_in_camera_frame[2, :]
 
-    position_in_camera_frame = t * ray_in_camera_frame
-    return position_in_camera_frame
+    positions_in_camera_frame = t * rays_in_camera_frame
+    return positions_in_camera_frame
 
 
 def extract_depth_from_depthmap_heuristic(
