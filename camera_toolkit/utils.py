@@ -1,11 +1,13 @@
 import numpy as np
 
 
-def homogeneous_vector(point: np.ndarray):
-    point_homog = np.zeros((4, 1))
-    point_homog[:3] = point.reshape((3, 1))
-    point_homog[3] = 1
-    return point_homog
+def homogeneous_vector(points: np.ndarray):
+    """
+    Args:
+        points: (3, N) array of points, each column is a set of coordinates
+    """
+    points_homog = np.vstack((points, np.ones(points.shape[1])))
+    return points_homog
 
 
 def homogeneous_matrix(translation_vector: np.ndarray, rotation_matrix: np.ndarray):

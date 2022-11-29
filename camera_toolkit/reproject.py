@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Union
 
 from camera_toolkit.utils import homogeneous_vector
 
@@ -38,20 +39,22 @@ def reproject_to_world_z_plane(
     return points
 
 
-def reproject_to_world_frame(u: int, v: int, camera_intrinsics_matrix: np.ndarray, camera_extrinsics_hommat: np.ndarray,
-                             depth_map: np.ndarray, mask_size=11, depth_percentile=0.05):
-    point_in_camera_frame = reproject_to_camera_frame(u, v, camera_intrinsics_matrix, depth_map, mask_size,
-                                                      depth_percentile)
-    point_homog = homogeneous_vector(point_in_camera_frame)
-    point_in_base_frame = camera_extrinsics_hommat @ point_homog
-    return point_in_base_frame[0:3]
+def reproject_to_world_frame(_u: Union[int, np.ndarray, list], _v: Union[int, np.ndarray, list],
+                             camera_intrinsics_matrix: np.ndarray, camera_extrinsics_hommat: np.ndarray,
+                             depth_map: np.ndarray, mask_size=11, depth_percentile=0.05) -> np.ndarray:
+    points_in_camera_frame = reproject_to_camera_frame(_u, _v, camera_intrinsics_matrix, depth_map, mask_size,
+                                                       depth_percentile)
+    homogeneous_points = homogeneous_vector(points_in_camera_frame)
+    point_in_base_frame = camera_extrinsics_hommat @ homogeneous_points
+    return point_in_base_frame[0:3, :]
 
 
-def reproject_to_camera_frame(_u: np.ndarray, _v: np.ndarray, camera_matrix: np.ndarray, depth_map: np.ndarray,
+def reproject_to_camera_frame(_u: Union[int, np.ndarray, list], _v: Union[int, np.ndarray, list],
+                              camera_matrix: np.ndarray, depth_map: np.ndarray,
                               depthmap_mask_size: int = 11, depth_percentile: float = 0.05) -> np.ndarray:
     """
-    Reprojects a point on the image plane to the 3D frame of the camera.
-    point = (u, v, 0) with origin in the top left corner of the img and y-axis pointing down
+    Reprojects points on the image plane to the 3D frame of the camera.
+    point = (_u[i], _v[i], 0) with origin in the top left corner of the img and y-axis pointing down
 
     Args:
         _u: (N,) array of u-coordinates
@@ -69,6 +72,7 @@ def reproject_to_camera_frame(_u: np.ndarray, _v: np.ndarray, camera_matrix: np.
     # ensure proper functionality when integers are passed for u and v
     u = np.array(_u).flatten()
     v = np.array(_v).flatten()
+
     img_coords = np.array([u, v, [1.0 for _ in range(u.size)]])
     rays_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is cast by numpy to column vector!
 
@@ -81,8 +85,8 @@ def reproject_to_camera_frame(_u: np.ndarray, _v: np.ndarray, camera_matrix: np.
 
 
 def extract_depth_from_depthmap_heuristic(
-        _u: np.ndarray, _v: np.ndarray, depth_map: np.ndarray, mask_size: int = 11, depth_percentile: float = 0.05
-) -> np.ndarray:
+        _u: Union[int, np.ndarray, list], _v: Union[int, np.ndarray, list], depth_map: np.ndarray, mask_size: int = 11,
+        depth_percentile: float = 0.05) -> Union[float, np.ndarray]:
     """
     A simple heuristic to get more robust depth values of the depth map. Especially with keypoints we are often interested in points
     on the edge of an object, or even worse on a corner. Not only are these regions noisy by themselves but the keypoints could also be
@@ -102,6 +106,7 @@ def extract_depth_from_depthmap_heuristic(
     # ensure proper functionality when integers are passed for u and v
     u = np.array(_u).flatten()
     v = np.array(_v).flatten()
+
     assert u.shape == v.shape, "u and v arrays have dissimilar dimensions"
     assert mask_size % 2, "only odd sized markers allowed"
     assert (
@@ -114,4 +119,7 @@ def extract_depth_from_depthmap_heuristic(
                        u[i] - mask_size // 2: u[i] + mask_size // 2]
         depth_regions[i, :] = depth_region.flatten()
     depth_values = np.nanquantile(depth_regions, depth_percentile, axis=1)
-    return depth_values
+    if depth_values.size == 1:
+        return float(depth_values)
+    else:
+        return depth_values
