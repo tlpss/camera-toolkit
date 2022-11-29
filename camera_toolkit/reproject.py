@@ -61,7 +61,7 @@ def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_m
 
     """
     img_coords = np.array([u, v, 1.0])
-    ray_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is casted by numpy to column vector!
+    ray_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is cast by numpy to column vector!
 
     z_in_camera_frame = extract_depth_from_depthmap_heuristic(u, v, depth_map, mask_size, depth_percentile)
     t = z_in_camera_frame / ray_in_camera_frame[2]
