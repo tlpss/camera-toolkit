@@ -42,6 +42,23 @@ def reproject_to_world_z_plane(
 def reproject_to_world_frame(_u: Union[int, np.ndarray, list], _v: Union[int, np.ndarray, list],
                              camera_intrinsics_matrix: np.ndarray, camera_extrinsics_hommat: np.ndarray,
                              depth_map: np.ndarray, mask_size=11, depth_percentile=0.05) -> np.ndarray:
+    """
+        Reprojects points on the image plane to a base frame, as defined by an extrinsics matrix.
+        point = (_u[i], _v[i], 0) with origin in the top left corner of the img and y-axis pointing down
+
+        Args:
+            _u: (N,) array of u-coordinates
+            _v: (N,) array of v-coordinates
+            camera_intrinsics_matrix: 3x3 camera matrix
+            camera_extrinsics_hommat: 4x4 homogeneous extrinsics matrix
+            depth_map: LxM depth map, depth_map at coord (u,v) gives the z-value of the position of that pixel in the
+                        camera frame (!not the distance to the camera!)
+            depthmap_mask_size: see use in extract_depth_from_depthmap_heuristic
+            depth_percentile: see use in extract_depth_from_depthmap_heuristic
+
+        Returns: (3, N) np.array containing the coordinates of the point in the camera frame. Each column is a set of
+                    coordinates.
+        """
     points_in_camera_frame = reproject_to_camera_frame(_u, _v, camera_intrinsics_matrix, depth_map, mask_size,
                                                        depth_percentile)
     homogeneous_points = homogeneous_vector(points_in_camera_frame)
@@ -67,7 +84,6 @@ def reproject_to_camera_frame(_u: Union[int, np.ndarray, list], _v: Union[int, n
 
     Returns: (3, N) np.array containing the coordinates of the point in the camera frame. Each column is a set of
                 coordinates.
-
     """
     # ensure proper functionality when integers are passed for u and v
     u = np.array(_u).flatten()
