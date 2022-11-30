@@ -88,7 +88,7 @@ class Zed2i(BaseCamera):
         image = self.image_matrix.get_data()
         return self.image_shape_opencv_to_torch(image)
 
-    def get_dept_image(self) -> np.ndarray:
+    def get_depth_image(self) -> np.ndarray:
         """
         Returns an 8 bit quantization of the depth map. Should only be used for visualization.
         """
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     img = zed.image_shape_torch_to_opencv(img)
     print(img.shape)
     depth_map = zed.get_depth_map()
-    depth_image = zed.get_dept_image()
+    depth_image = zed.get_depth_image()
 
     cv2.imshow("test", img)
     cv2.imshow(",", depth_image)
