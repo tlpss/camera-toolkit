@@ -1,8 +1,11 @@
 import numpy as np
+from typing import Union
+
+from camera_toolkit.utils import homogeneous_vector
 
 
 def reproject_to_world_z_plane(
-    image_coords: np.ndarray, camera_matrix: np.ndarray, world_in_camera_frame_pose: np.ndarray, height: float = 0.0
+        image_coords: np.ndarray, camera_matrix: np.ndarray, world_in_camera_frame_pose: np.ndarray, height: float = 0.0
 ):
     """Reprojects points from the camera plane to the specified Z-plane of the world frame
     (as this is often the frame in which you have the z-information)
@@ -39,33 +42,70 @@ def reproject_to_world_z_plane(
     return points
 
 
-def reproject_to_camera_frame(u: int, v: int, camera_matrix: np.ndarray, depth_map: np.ndarray, mask_size=11, depth_percentile=0.05):
+def reproject_to_world_frame(_u: Union[int, np.ndarray, list], _v: Union[int, np.ndarray, list],
+                             camera_intrinsics_matrix: np.ndarray, camera_extrinsics_hommat: np.ndarray,
+                             depth_map: np.ndarray, mask_size=11, depth_percentile=0.05) -> np.ndarray:
     """
-    reprojects a point on the image plane to the 3D frame of the camera.
-    point = (u,v , 0) with origin in the top left corner of the img and y-axis point down
+        Reprojects points on the image plane to a base frame, as defined by an extrinsics matrix.
+        point = (_u[i], _v[i], 0) with origin in the top left corner of the img and y-axis pointing down
+
+        Args:
+            _u: (N,) array of u-coordinates
+            _v: (N,) array of v-coordinates
+            camera_intrinsics_matrix: 3x3 camera matrix
+            camera_extrinsics_hommat: 4x4 homogeneous extrinsics matrix
+            depth_map: LxM depth map, depth_map at coord (u,v) gives the z-value of the position of that pixel in the
+                        camera frame (!not the distance to the camera!)
+            depthmap_mask_size: see use in extract_depth_from_depthmap_heuristic
+            depth_percentile: see use in extract_depth_from_depthmap_heuristic
+
+        Returns: (3, N) np.array containing the coordinates of the point in the camera frame. Each column is a set of
+                    coordinates.
+        """
+    points_in_camera_frame = reproject_to_camera_frame(_u, _v, camera_intrinsics_matrix, depth_map, mask_size,
+                                                       depth_percentile)
+    homogeneous_points = homogeneous_vector(points_in_camera_frame)
+    point_in_base_frame = camera_extrinsics_hommat @ homogeneous_points
+    return point_in_base_frame[0:3, :]
+
+
+def reproject_to_camera_frame(_u: Union[int, np.ndarray, list], _v: Union[int, np.ndarray, list],
+                              camera_matrix: np.ndarray, depth_map: np.ndarray,
+                              depthmap_mask_size: int = 11, depth_percentile: float = 0.05) -> np.ndarray:
+    """
+    Reprojects points on the image plane to the 3D frame of the camera.
+    point = (_u[i], _v[i], 0) with origin in the top left corner of the img and y-axis pointing down
 
     Args:
-        u:
-        v:
+        _u: (N,) array of u-coordinates
+        _v: (N,) array of v-coordinates
         camera_matrix: 3x3 camera matrix
-        depth_map: MxN depth map, depth_map at coord (u,v) gives the z-value of the position of that pixel in the camera frame (!not the distance to the camera!)
+        depth_map: LxM depth map, depth_map at coord (u,v) gives the z-value of the position of that pixel in the
+                    camera frame (!not the distance to the camera!)
+        depthmap_mask_size: see use in extract_depth_from_depthmap_heuristic
+        depth_percentile: see use in extract_depth_from_depthmap_heuristic
 
-    Returns: (3,) np.array containing the coordinates of the point in the camera frame.
-
+    Returns: (3, N) np.array containing the coordinates of the point in the camera frame. Each column is a set of
+                coordinates.
     """
-    img_coords = np.array([u, v, 1.0])
-    ray_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is casted by numpy to column vector!
+    # ensure proper functionality when integers are passed for u and v
+    u = np.array(_u).flatten()
+    v = np.array(_v).flatten()
 
-    z_in_camera_frame = extract_depth_from_depthmap_heuristic(u,v,depth_map,mask_size,depth_percentile)
-    t = z_in_camera_frame / ray_in_camera_frame[2]
+    img_coords = np.array([u, v, [1.0 for _ in range(u.size)]])
+    rays_in_camera_frame = np.linalg.inv(camera_matrix) @ img_coords  # shape is cast by numpy to column vector!
 
-    position_in_camera_frame = t * ray_in_camera_frame
-    return position_in_camera_frame
+    z_values_in_camera_frame = extract_depth_from_depthmap_heuristic(u, v, depth_map, depthmap_mask_size,
+                                                                     depth_percentile)
+    t = z_values_in_camera_frame / rays_in_camera_frame[2, :]
+
+    positions_in_camera_frame = t * rays_in_camera_frame
+    return positions_in_camera_frame
 
 
 def extract_depth_from_depthmap_heuristic(
-    u: int, v: int, depth_map: np.ndarray, mask_size: int = 11, depth_percentile: float = 0.05
-) -> float:
+        _u: Union[int, np.ndarray, list], _v: Union[int, np.ndarray, list], depth_map: np.ndarray, mask_size: int = 11,
+        depth_percentile: float = 0.05) -> Union[float, np.ndarray]:
     """
     A simple heuristic to get more robust depth values of the depth map. Especially with keypoints we are often interested in points
     on the edge of an object, or even worse on a corner. Not only are these regions noisy by themselves but the keypoints could also be
@@ -77,14 +117,31 @@ def extract_depth_from_depthmap_heuristic(
     you could directly take the pointcloud as well instead of manually querying the heatmap, but I find that they are more noisy.
 
     Also note that this function assumes there are no negative infinity values (no objects closer than 30cm!)
+
+    Args:
+        _u: 1D array of u-coordinates
+        _v: 1D array of v-coordinates
     """
+    # ensure proper functionality when integers are passed for u and v
+    u = np.array(_u).flatten()
+    v = np.array(_v).flatten()
+
+    assert u.shape == v.shape, "u and v arrays have dissimilar dimensions"
     assert mask_size % 2, "only odd sized markers allowed"
     assert (
-        depth_percentile < 0.25
+            depth_percentile < 0.25
     ), "For straight corners, about 75 percent of the region will be background.. Are your sure you want the percentile to be lower?"
-    depth_region = depth_map[v - mask_size // 2 : v + mask_size // 2, u - mask_size // 2 : u + mask_size // 2]
-    depth = np.nanquantile(depth_region.flatten(), depth_percentile)
-    return depth
+
+    depth_regions = np.zeros((u.size, (mask_size - 1) ** 2))
+    for i in range(u.size):
+        depth_region = depth_map[v[i] - mask_size // 2: v[i] + mask_size // 2,
+                       u[i] - mask_size // 2: u[i] + mask_size // 2]
+        depth_regions[i, :] = depth_region.flatten()
+    depth_values = np.nanquantile(depth_regions, depth_percentile, axis=1)
+    if depth_values.size == 1:
+        return float(depth_values)
+    else:
+        return depth_values
 
 
 def project_world_to_image_plane(point: np.ndarray, world_to_camera_transform: np.ndarray, camera_matrix: np.ndarray) -> np.ndarray:
@@ -99,4 +156,3 @@ def project_world_to_image_plane(point: np.ndarray, world_to_camera_transform: n
     point_image_homogeneous = camera_matrix @ point_camera
     point_image = point_image_homogeneous[:2] / point_image_homogeneous[2]
     return point_image
-

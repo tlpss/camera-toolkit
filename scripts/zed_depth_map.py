@@ -15,7 +15,7 @@ if __name__ == "__main__":
     img = zed.image_shape_torch_to_opencv(img)
     print(img.shape)
     depth_map = zed.get_depth_map()
-    depth_image = zed.get_dept_image()
+    depth_image = zed.get_depth_image()
 
     def mouse_callback(event, x, y, flags, params):
         if event == 2:

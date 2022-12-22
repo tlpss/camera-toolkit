@@ -6,8 +6,8 @@ from scipy.spatial.transform import Rotation as R
 
 
 def get_aruco_marker_coords(
-    frame: np.ndarray,
-    aruco_dictionary_name: str,
+        frame: np.ndarray,
+        aruco_dictionary_name: str,
 ):
     this_aruco_dictionary = cv2.aruco.Dictionary_get(aruco_dictionary_name)
     this_aruco_parameters = cv2.aruco.DetectorParameters_create()
@@ -25,13 +25,12 @@ def get_aruco_marker_coords(
 
 
 def get_aruco_marker_poses(
-    frame: np.ndarray,
-    cam_matrix: np.ndarray,
-    aruco_marker_size: float,
-    aruco_dictionary_name: str,
-    visualize: bool = False,
+        frame: np.ndarray,
+        cam_matrix: np.ndarray,
+        aruco_marker_size: float,
+        aruco_dictionary_name: str,
+        visualize: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-
     this_aruco_dictionary = cv2.aruco.Dictionary_get(aruco_dictionary_name)
     this_aruco_parameters = cv2.aruco.DetectorParameters_create()
 
@@ -39,11 +38,19 @@ def get_aruco_marker_poses(
     (corners, marker_ids, rejected) = cv2.aruco.detectMarkers(
         frame, this_aruco_dictionary, parameters=this_aruco_parameters
     )
+
     # Check that at least one ArUco marker was detected
     if marker_ids is None:
         return frame, None, None, None
 
-        # Get the rotation and translation vectors
+    # Refine the corners
+    # cv2.aruco.refineDetectedMarkers(frame, board, corners, marker_ids, rejected)
+    termination_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT, 100, 0.001) # max 100 iterations or 0.001m acc
+    search_window_size = (5, 5)  # multiply by 2 + 1 to get real search window size opencv will use (5x5) = (11x11) window
+    zero_zone = (-1, -1)  # none
+    corners = cv2.cornerSubPix(frame[:,:,0], corners[0], search_window_size, zero_zone, termination_criteria)
+
+    # Get the rotation and translation vectors
     rvecs, tvecs, obj_points = cv2.aruco.estimatePoseSingleMarkers(corners, aruco_marker_size, cam_matrix, np.zeros(4))
 
     # The pose of the marker is with respect to the camera lens frame.
@@ -54,14 +61,17 @@ def get_aruco_marker_poses(
     # z-axis points straight ahead away from your eye, out of the camera
     translations = []
     rotation_matrices = []
-    for i, marker_id in enumerate(marker_ids):
-        # Store the rotation information
-        rotation_matrix = np.eye(3)
-        rotation_matrix = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
 
-        translations.append(tvecs[i][0])
-        rotation_matrices.append(rotation_matrix)
+    if marker_ids.size == rvecs.shape[0]:
+        for i, marker_id in enumerate(marker_ids):
+            # Store the rotation information
+            rotation_matrix = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
 
+            translations.append(tvecs[i][0])
+            rotation_matrices.append(rotation_matrix)
+
+    else:
+        print("[WARNING] detected markers does not equal amount of rotation vectors weirdly")
     if visualize:
         frame = np.ascontiguousarray(frame)
         # Draw the axes on the marker
