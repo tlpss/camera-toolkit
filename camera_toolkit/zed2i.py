@@ -8,15 +8,15 @@ from camera_toolkit.camera import BaseCamera
 class Zed2i(BaseCamera):
     def __init__(self, resolution: sl.RESOLUTION = sl.RESOLUTION.HD2K, depth_mode: sl.DEPTH_MODE = sl.DEPTH_MODE.NEURAL,
                  fps=15, serial_number=35357320) -> None:
-        # TODO: make depth settings configurable.
-        # TODO: make camera ID configurable.
-
         super().__init__()
         self.camera = sl.Camera()
         self.camera_params = sl.InitParameters()
         self.camera_params.camera_resolution = resolution
         self.camera_params.camera_fps = fps
         self.camera_params.set_from_serial_number(serial_number)
+
+        if serial_number:
+            self.camera_params.set_from_serial_number(serial_number)
 
         # https://www.stereolabs.com/docs/depth-sensing/depth-settings/
         self.camera_params.depth_mode = depth_mode  # the Neural mode gives far better results usually

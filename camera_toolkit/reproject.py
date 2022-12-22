@@ -21,6 +21,9 @@ def reproject_to_world_z_plane(
     Returns:
         _type_ Nx3 numpy axis with world coordinates on the Z=height plane wrt to the world frame.
     """
+    if image_coords.shape[0] == 0:
+        return []
+
     coords = np.ones((image_coords.shape[0], 3))
     coords[:, :2] = image_coords
     image_coords = np.transpose(coords)
@@ -139,3 +142,17 @@ def extract_depth_from_depthmap_heuristic(
         return float(depth_values)
     else:
         return depth_values
+
+
+def project_world_to_image_plane(point: np.ndarray, world_to_camera_transform: np.ndarray, camera_matrix: np.ndarray) -> np.ndarray:
+    """Projects a point from the 3D world frame to the 2D image plane.
+    
+    Works in two steps. First transforms the 3D point to a 3D point in camera frame. 
+    Then projects the point onto the image plane. Note the normalization by the third coordinate."""
+    point = np.array(point).reshape((3,1))
+    point_homogeneous = np.append(point, [[1.0]])
+    point_camera_homogeneous = world_to_camera_transform @ point_homogeneous
+    point_camera = point_camera_homogeneous[:3]
+    point_image_homogeneous = camera_matrix @ point_camera
+    point_image = point_image_homogeneous[:2] / point_image_homogeneous[2]
+    return point_image
